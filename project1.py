@@ -51,10 +51,6 @@ def tokenize_text(text):
     # 5) 150 stop words
     stop_word = stopwords.words("english")
     tokens = [token for token in tokens if token not in stop_word[:150]]
-
-    # tokens = [token.lower() for token in tokens]
-    # wnl = nltk.WordNetLemmatizer()
-    # tokens = [wnl.lemmatize(t) for t in tokens]
     return tokens
 
 # read txt file
@@ -86,6 +82,8 @@ def merge_blocks(block_files):
     file_count = 0
     f = open(file_output.format(file_count), "w")
     count = 0
+
+    posting_list_length = 0
 
     files = [i for i in range(len(block_files))]  # this is the block numbers range
     for file_name in block_files:
@@ -119,6 +117,7 @@ def merge_blocks(block_files):
 
         f.write(str(token) + ":" + " ".join(lists) + "\n")
         count += 1
+        posting_list_length += len(lists)
         if count == 25000:
             f.close()
             file_count += 1
@@ -140,7 +139,8 @@ def merge_blocks(block_files):
                 else:
                     lines[line[0]] = [line[1]]
     f.close()
-    return file_count * 25000 + count
+    return (file_count * 25000 + count, posting_list_length)
+
 
 
 # write memory to txt file
@@ -266,43 +266,48 @@ def union(a, b):
     return list(ordered_list.keys())
 
 
-# read files to generate blocks
-files = sorted(glob.glob("./reuters21578/*reut2*.sgm"))
-#print(len(files))
+# # read files to generate blocks
+# files = sorted(glob.glob("./reuters21578/*reut2*.sgm"))
+# #print(len(files))
+#
+# dictionary = {}
+# block_number = 0
+#
+# for file in files:
+#     documents = load_file(file)
+#     print(file)
+#     clean_documents = clean_file(documents)
+#     counter = 0
+#
+#     for document in clean_documents:
+#         document[1] = tokenize_text(document[1])
+#
+#     for document in clean_documents:
+#         spimi(dictionary, document)
+#         counter += 1
+#         if counter == 500:
+#             counter = 0
+#             save_memorydata_to_txt(dictionary, "./blocks/block" + str(block_number) + ".txt")
+#             dictionary = {}
+#             block_number += 1
+#             print(block_number)
+#
+#
+# files = glob.glob("./blocks/*.txt")
+# print("start")
+# size, posting_list_size = merge_blocks(files)
+# print("term size", size, "posting list size", posting_list_size)
 
-dictionary = {}
-block_number = 0
-
-for file in files:
-    documents = load_file(file)
-    print(file)
-    clean_documents = clean_file(documents)
-    counter = 0
-
-    for document in clean_documents:
-        document[1] = tokenize_text(document[1])
-
-    for document in clean_documents:
-        spimi(dictionary, document)
-        counter += 1
-        if counter == 500:
-            counter = 0
-            save_memorydata_to_txt(dictionary, "./blocks/block" + str(block_number) + ".txt")
-            dictionary = {}
-            block_number += 1
-            print(block_number)
 
 
-files = glob.glob("./blocks/*.txt")
-print("start")
-size = merge_blocks(files)
-print(size)
+query = "Jimmy Carter"
+result = query_intersection("./indexs/index0.txt",sorted(tokenize_text(query)))
+if len(result) == 0:
+    result = query_intersection("./indexs/index1.txt", tokenize_text(query))
+print("intersection", result)
 
 
 
-# query = "adjusted adjustment"
-# result = query_intersection("./blocks/block36.txt", tokenize_text(query))
-# print("intersection", result)
 #
 # result2 = query_union("./blocks/block36.txt", tokenize_text(query))
 # print("union", result2)
